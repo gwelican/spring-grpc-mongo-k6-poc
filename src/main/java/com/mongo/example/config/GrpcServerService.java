@@ -1,10 +1,13 @@
 package com.mongo.example.config;
 
+import brave.Span;
+import brave.Tracer;
 import io.grpc.stub.StreamObserver;
 import io.grpc.teams.TeamServiceGrpc;
 import io.grpc.teams.Teams;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -14,11 +17,18 @@ import java.util.UUID;
 public class GrpcServerService extends TeamServiceGrpc.TeamServiceImplBase {
 
     private final TeamRepository teamRepository;
+    private final Tracer tracer;
 
+    @NewSpan
     @Override
     public void createTeam(Teams.CreateTeamRequest request, StreamObserver<Teams.CreateTeamResponse> responseObserver) {
         String teamId = UUID.randomUUID().toString();
-        teamRepository.save(new Team(teamId, request.getName())).block();
+        Span newSpan = tracer.nextSpan().name("Mongodb").start();
+        try (Tracer.SpanInScope ws = tracer.withSpanInScope(newSpan.start())) {
+            teamRepository.save(new Team(teamId, request.getName())).block();
+        } finally {
+            newSpan.finish();
+        }
 
         var reply = Teams.CreateTeamResponse.newBuilder().setId(teamId).build();
         responseObserver.onNext(reply);
