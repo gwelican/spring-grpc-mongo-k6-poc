@@ -40,7 +40,7 @@ dependencies {
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
 
-    implementation 'net.devh:grpc-server-spring-boot-starter:2.11.0.RELEASE'
+    implementation 'net.devh:grpc-server-spring-boot-starter:2.12.0.RELEASE'
 
 //    implementation 'jakarta.annotation:jakarta.annotation-api'
 
